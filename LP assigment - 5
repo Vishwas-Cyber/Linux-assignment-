@@ -1,0 +1,92 @@
+Linux Assignement-5
+Name-Vishwas .M 
+class & section-3C 
+Usn-ENG24CY0197 
+Roll.no-32
+
+1) What is a shell in Linux OS? How many categories of shell exist? Why Bash is popular? 
+A shell is the command-line interpreter that connects the user to the Linux operating system. It reads user commands, passes them to the kernel, and displays output. It can also run scripts to automate repetitive tasks.
+Categories of shells:
+1.	Bourne Shell family (sh-based):
+o	sh (original Bourne shell)
+o	bash (Bourne Again Shell)
+o	dash (Debian Almquist Shell)
+o	ksh (Korn shell)
+o	zsh (Z shell)
+2.	C Shell family (csh-based):
+o	csh (C Shell)
+o	tcsh (Tenex C Shell)
+Why Bash is popular:
+•	Default in almost all Linux distributions (Ubuntu, Fedora, RHEL, etc.)
+•	Combines Bourne shell syntax with C-shell features.
+•	Provides strong scripting capabilities, command history, auto-completion, and arrays.
+•	Backward-compatible with traditional shell scripts.
+•	Open source and actively maintained by GNU.
+________________________________________
+2) What does the ls -Z command display?
+ls -Z shows SELinux security contexts for files and directories.
+Example:
+ls -Z /home
+Output format:
+-rw-r--r--. user user unconfined_u:object_r:user_home_t:s0 file.txt
+Here, the part unconfined_u:object_r:user_home_t:s0 is the SELinux context, indicating the security user, role, type, and level.
+________________________________________
+3) Command to list all hidden files in current directory 
+ls -a
+or to show only hidden files:
+ls -d .*
+Explanation: In Linux, hidden files start with a dot (.). The -a option lists all files, including hidden ones.
+________________________________________
+4) Difference between hard links and soft (symbolic) links 
+Feature	Hard Link	Soft (Symbolic) Link
+Definition	Direct reference to the same inode as the original file	Shortcut pointing to the original file’s path
+Inode	Shares the same inode	Has its own inode
+Works across file systems	No	Yes
+If original is deleted	Hard link still works	Soft link breaks
+Creation	ln file1 file2	ln -s file1 file2
+Example:
+ln file.txt copy.txt      
+ln -s file.txt shortcut   
+________________________________________
+5) File permission -rwxr-x--x explained
+Type	Owner	Group	Others
+Permissions	rwx	r-x	--x
+Meaning	Owner can read, write, execute	Group can read and execute	Others can only execute
+So:
+•	Owner: full control (read/write/execute)
+•	Group: can read and execute, but not modify
+•	Others: can only execute (no read or write)
+________________________________________
+6) Command to change group ownership of a file data.txt to group staff 
+chgrp staff data.txt
+or using sudo if you lack permission:
+sudo chgrp staff data.txt
+________________________________________
+7) Why giving 777 permissions is dangerous 
+chmod 777 means:
+•	Owner, group, and others all have read, write, and execute access.
+Example:
+chmod 777 script.sh
+Any user can modify or replace script.sh. If malicious code is inserted, it can execute with your privileges.
+Best practice: Use least privilege — e.g. chmod 755 for executable scripts.
+________________________________________
+8) Difference between apropos (man -k) and whatis (man -f) (CO1)
+Command	Purpose	Example
+whatis	Shows a one-line description of a specific command	whatis ls
+apropos	Searches for commands related to a keyword	apropos list
+apropos does a keyword search across all man page descriptions, while whatis looks up a specific name match.
+________________________________________
+9) Redirect error output to error.log 
+Use file descriptor 2 (standard error):
+command 2> error.log
+Example:
+ls /root 2> error.log
+This writes permission-denied errors into error.log.
+________________________________________
+10) Use of tee to append output to a file instead of overwriting
+By default, tee overwrites the file. Use -a to append:
+command | tee -a output.log
+Example:
+echo "New log entry" | tee -a system.log
+This prints to terminal and appends the same text to system.log.
+
