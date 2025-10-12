@@ -1,0 +1,122 @@
+Linux Assignement-9
+Name-Vishwas.M 
+Class & section-3C 
+Usn-ENG24CY0197
+ Roll.no-32
+
+21) Script to check if a number is even or odd 
+
+set -euo pipefail
+
+read -r -p "Enter an integer: " n
+re='^-?[0-9]+$'
+[[ $n =~ $re ]] || { echo "Not an integer"; exit 1; }
+
+if (( n % 2 == 0 )); then
+  echo "$n is even"
+else
+  echo "$n is odd"
+fi
+________________________________________
+22) Difference between if and case in bash 
+Feature	if statement	case statement
+Use	Numeric or string comparison using conditions	Pattern matching (wildcards, strings)
+Syntax	if [ condition ]; then ... elif ... else ... fi	case value in pattern) commands;; *) default;; esac
+Flexibility	Handles complex logic (>, <, &&, `	
+Example	bash if [[ $x -gt 10 ]]; then echo big; fi	bash case $x in 10) echo ten;; 20) echo twenty;; esac
+________________________________________
+23) Script to find largest of three numbers 
+#!/usr/bin/env bash
+set -euo pipefail
+
+read -r -p "Enter first number: " a
+read -r -p "Enter second number: " b
+read -r -p "Enter third number: " c
+
+if (( a >= b && a >= c )); then
+  echo "$a is largest"
+elif (( b >= a && b >= c )); then
+  echo "$b is largest"
+else
+  echo "$c is largest"
+fi
+________________________________________
+24) For loop to traverse array
+Bash treats commas as characters, so correct definition removes them.
+#!/usr/bin/env bash
+set -euo pipefail
+
+arr=(123 "Abs" -2.3 'A' 23.56 0)
+
+echo "Elements in array:"
+for element in "${arr[@]}"; do
+  echo "$element"
+done
+________________________________________
+25) Loop through all files in current directory 
+#!/usr/bin/env bash
+set -euo pipefail
+
+for file in *; do
+  [[ -f "$file" ]] && echo "File: $file"
+done
+________________________________________
+26) Difference between while and until loops (CO4)
+Feature	while loop	until loop
+Execution condition	Runs while the condition is true	Runs until the condition becomes true
+Logical opposite	True means continue	True means stop
+Example	bash while [[ $x -lt 5 ]]; do ((x++)); done	bash until [[ $x -ge 5 ]]; do ((x++)); done
+________________________________________
+27) Countdown timer using while loop 
+#!/usr/bin/env bash
+set -euo pipefail
+
+read -r -p "Enter seconds to count down: " t
+while (( t > 0 )); do
+  echo -ne "Time left: $t sec\r"
+  sleep 1
+  ((t--))
+done
+echo -e "\nTime's up!"
+________________________________________
+28) Using break and continue
+#!/usr/bin/env bash
+set -euo pipefail
+
+for i in {1..10}; do
+  if (( i == 5 )); then
+    echo "Skipping $i"
+    continue
+  fi
+  if (( i == 8 )); then
+    echo "Breaking at $i"
+    break
+  fi
+  echo "Count: $i"
+done
+continue skips current iteration; break exits the loop entirely.
+
+29) Check if a file exists or not
+#!/usr/bin/env bash
+set -euo pipefail
+
+read -r -p "Enter filename: " fname
+
+if [[ -f "$fname" ]]; then
+  echo "File exists."
+else
+  echo "File does not exist."
+fi
+________________________________________
+30) Factorial of a number using for loop
+#!/usr/bin/env bash
+set -euo pipefail
+
+read -r -p "Enter a positive integer: " n
+fact=1
+for (( i=1; i<=n; i++ )); do
+  ((fact *= i))
+done
+echo "Factorial of $n = $fact"
+
+
