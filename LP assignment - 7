@@ -1,0 +1,172 @@
+Linux Assignement-7 
+Name – Vishwas.M 
+Class & section-3C 
+Usn-ENG24CY0197 
+Roll.no-32________________________________________
+1) What is a Bash shell script? Give one example. 
+A Bash shell script is a plain-text file containing Bash commands executed top-to-bottom by the Bash interpreter. It encodes repeatable terminal work: setup, checks, loops, decisions, and cleanup. You run it non-interactively, or interactively with prompts.
+Example: “backup.sh”
+#!/usr/bin/env bash
+set -euo pipefail
+
+src_dir="${1:-$HOME/Documents}"
+dst_dir="${2:-$HOME/backups}"
+ts="$(date +%Y%m%d-%H%M%S)"
+archive="${dst_dir}/docs-${ts}.tar.gz"
+
+mkdir -p "$dst_dir"
+tar -czf "$archive" -C "$src_dir" .
+echo "Backup written to: $archive"
+if we  make it executable and run:
+chmod +x backup.sh
+./backup.sh "/path/to/src" "/path/to/dest"
+________________________________________
+2) Write a simple shell script to print “Hello World”.
+#!/usr/bin/env bash
+set -euo pipefail
+echo "Hello World"
+________________________________________
+3) Purpose of comments # in a shell script.
+1.	Document intent, assumptions, and non-obvious logic.
+2.	Disable a line quickly during testing.
+3.	Provide usage examples at the top (“here-doc” style help or simple).
+Bash ignores everything after # on a line, so comments do not affect runtime.
+________________________________________
+4) Declaring “types” in Bash: int, float, double, string, Boolean, char. 
+Reality check: Bash is dynamically typed and string-centric. “Types” are conventions, with a few helpers.
+•	Integer: use declare -i or arithmetic contexts.
+ declare -i count=0
+ count+=5          # arithmetic works
+echo "$count"
+num=7; echo $((num + 3))
+•	Float/Double: Bash has no native floating point. Use bc or awk.
+price="12.75"
+qty=3
+total=$(awk -v p="$price" -v q="$qty" 'BEGIN{printf "%.2f", p*q}')
+echo "$total"
+•	String: default.
+name="VISHWAS"
+echo "Hello, $name"
+•	Boolean: use exit status semantics or 0/1 variables.
+is_ready=1          # 1=true by convention, 0=false
+if (( is_ready )); then echo "ready"; fi
+
+# or commands: true/false
+if true; then echo "ok"; fi
+•	Char: just a one-character string.
+letter="A"
+[[ ${#letter} -eq 1 ]] && echo "single char"
+•	Arrays/Assoc arrays: helpful in real scripts.
+fruits=( banana apple mango)
+declare -A ports=( [http]=80 [https]=443 )
+________________________________________
+5) Script to display current date and time. 
+#!/usr/bin/env bash
+set -euo pipefail
+date "+%Y-%m-%d %H:%M:%S %Z"
+________________________________________
+6) Constant vs variable in Bash. 
+•	Variable: value can change at runtime.
+threshold=90
+threshold=95
+•	Constant: mark read-only with declare -r. Any later write fails.
+declare -r API_URL="https://example.com/v1"
+# API_URL="..."  # will error: readonly variable
+Notes:
+•	export makes a variable available to child processes, not read-only.
+•	You can emulate constants in env files loaded with set -u to fail on unset.
+________________________________________
+7) Read two integers from user and print their sum.
+With robust validation:
+#!/usr/bin/env bash
+set -euo pipefail
+
+read -r -p "Enter first integer: " a
+read -r -p "Enter second integer: " b
+
+int_re='^-?[0-9]+$'
+if [[ ! "$a" =~ $int_re || ! "$b" =~ $int_re ]]; then
+  echo "Error: both inputs must be integers." >&2
+  exit 1
+fi
+
+sum=$(( a + b ))
+echo "Sum: $sum"
+________________________________________
+8) Use of source (a.k.a. .) in shell scripting. 
+source file.sh executes a file in the current shell process. This is used to:
+•	Load environment variables, functions, and aliases into the current session.
+•	Apply configuration without spawning a subshell.
+•	Initialize scripts from a .env or .config.sh.
+Example:
+# env.sh
+export DB_HOST="localhost"
+export DB_PORT=5432
+#!/usr/bin/env bash
+set -euo pipefail
+source "./env.sh"
+echo "Connecting to $DB_HOST:$DB_PORT"
+If you used bash ./env.sh, exports would live only in the child process, not the current one.
+________________________________________
+9) How to debug a shell script. Two practical methods.
+1.	Trace mode: show commands as they execute.
+bash -x script.sh             # ad-hoc
+# or inside script:
+set -x    # enable
+# ... code ...
+set +x    # disable
+# For better trace lines:
+export PS4='+ ${BASH_SOURCE}:${LINENO}:${FUNCNAME[0]:-main}: '
+2.	Strict mode + fail fast: turn runtime mistakes into actionable errors.
+set -euo pipefail
+# -e: exit on error
+# -u: fail on unset variables
+# -o pipefail: pipeline fails if any command fails
+Extras: print checkpoints, validate inputs with regex, and use shellcheck offline to catch common bugs.
+________________________________________
+10) Bash script to create and delete a file. (CO4)
+idempotent flow with checks:
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: $0 {create <path>|delete <path>}" >&2
+  exit 2
+}
+
+[[ $# -eq 2 ]] || usage
+action="$1"
+target="$2"
+
+case "$action" in
+  create)
+    if [[ -e "$target" ]]; then
+      echo "File already exists: $target"
+    else
+      mkdir -p "$(dirname "$target")"
+      : > "$target"       # create empty file
+      echo "Created: $target"
+    fi
+    ;;
+  delete)
+    if [[ ! -e "$target" ]]; then
+      echo "No such file: $target"
+      exit 1
+    fi
+    if [[ -d "$target" ]]; then
+      echo "Error: '$target' is a directory. Refusing." >&2
+      exit 1
+    fi
+    rm -i -- "$target"    # interactive prompt for safety
+    echo "Deleted: $target"
+    ;;
+  *)
+    usage
+    ;;
+esac
+Run:
+chmod +x file_ops.sh
+./file_ops.sh create ./tmp/demo.txt
+./file_ops.sh delete ./tmp/demo.txt
+________________________________________
+
