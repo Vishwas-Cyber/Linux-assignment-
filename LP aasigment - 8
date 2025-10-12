@@ -1,0 +1,141 @@
+Linux Assignement-8
+Name-Vishwas.M 
+Class- section-3C 
+Usn-ENG24CY0197
+ Roll.no-32
+________________________________________
+11) User-defined function in shell scripting 
+A user-defined function groups commands under a name so you can call them multiple times with different inputs.
+set -euo pipefail
+
+greet() {               # define
+  local name="${1:-user}"
+  echo "Hello, $name"
+}
+
+greet "VISHWAS"        # call
+greet                   # uses default
+________________________________________
+12) Function to multiply two integers 
+#!/usr/bin/env bash
+set -euo pipefail
+
+mul() {
+  local a="$1" b="$2" re='^-?[0-9]+$'
+  [[ $a =~ $re && $b =~ $re ]] || { echo "integers only" >&2; return 2; }
+  echo $(( a * b ))
+}
+
+read -r -p "A: " x
+read -r -p "B: " y
+echo "Product: $(mul "$x" "$y")"
+________________________________________
+13) Arrays in Bash: 1D, “2D”, “3D” 
+Bash has only 1D arrays (indexed) and associative arrays. Higher dimensions are emulated.
+•	1D indexed
+nums=(10 20 30)
+echo "${nums[1]}"       # 20
+nums+=("40")            # append
+echo "${#nums[@]}"      # length
+•	1D associative
+declare -A ports=([http]=80 [https]=443)
+echo "${ports[https]}"
+•	2D emulation: flatten keys row:col in an associative array.
+declare -A m
+m["0:0"]=1; m["0:1"]=2
+m["1:0"]=3; m["1:1"]=4
+echo "${m[1:1]}"        # 4
+•	3D emulation: extend key x:y:z.
+declare -A t
+t["0:0:0"]="A"
+t["0:1:2"]="B"
+Rule of thumb: for tabular data use associative arrays with composite keys or store rows as strings and parse.
+________________________________________
+14) Script to display elements of an array 
+set -euo pipefail
+items=(alpha beta gamma delta)
+
+echo "All values:"
+for v in "${items[@]}"; do
+  echo " - $v"
+done
+
+echo "Indices and values:"
+for i in "${!items[@]}"; do
+  printf "[%d] = %s\n" "$i" "${items[$i]}"
+done
+________________________________________
+15) Purpose of cron in Linux 
+cron runs commands on a defined schedule without human intervention. Use it for backups, log rotation, reports, integrity checks, and housekeeping.
+________________________________________
+16) Cron job to run a backup script every midnight 
+Edit your crontab:
+crontab -e
+Add:
+0 0 * * * /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1
+________________________________________
+17) Schedule a one-time job with at 
+Ensure the daemon is running (atd service). Then:
+echo "/usr/local/bin/backup.sh >> /var/log/backup.log 2>&1" | at 20:15
+at 05:45 AM tomorrow -f /home/user/run_report.sh
+atq
+atrm <job_id>
+________________________________________
+18) Script to display disk usage with df and du 
+set -euo pipefail
+
+echo "Filesystem summary:"
+df -hT | awk 'NR==1 || $2!="tmpfs"'
+
+echo
+target="${1:-$HOME}"
+echo "Top 10 directories in: $target"
+du -h -d 1 "$target" 2>/dev/null | sort -h | tail -n 10
+Usage:
+chmod +x disk_usage.sh
+./disk_usage.sh /var/log
+________________________________________
+19) Log script output with tee
+tee writes to stdout and a file at the same time.
+set -euo pipefail
+
+log="/var/log/mytask.log"
+{
+  echo "Start: $(date)"
+  echo "Running checks..."
+  sleep 1
+  echo "Done."
+} | tee -a "$log"
+For errors too:
+./task.sh 2>&1 | tee -a /var/log/task.log
+________________________________________
+20) Example: automate system admin with a shell script 
+Use case: new-user onboarding with idempotent checks, SSH key setup, baseline packages, and a quota.
+set -euo pipefail
+
+user="${1:?username required}"
+pubkey_file="${2:-/root/default_id_rsa.pub}"
+
+id -u "$user" >/dev/null 2>&1 || useradd -m -s /bin/bash "$user"
+
+home_dir="$(getent passwd "$user" | cut -d: -f6)"
+ssh_dir="$home_dir/.ssh"
+auth_keys="$ssh_dir/authorized_keys"
+
+install -d -m 700 -o "$user" -g "$user" "$ssh_dir"
+
+if [[ -f "$pubkey_file" ]]; then
+  install -m 600 -o "$user" -g "$user" "$pubkey_file" "$auth_keys"
+fi
+
+apt-get update -y
+apt-get install -y vim htop git fail2ban
+
+chsh -s /bin/bash "$user"
+
+setquota -u "$user" 5G 6G 0 0 / || true   # if quotas enabled; ignore if not
+
+echo "User $user provisioned at $(date)"
+Run:
+sudo ./onboard.sh alice /root/alice_id_rsa.pub
+
